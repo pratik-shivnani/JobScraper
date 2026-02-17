@@ -1,0 +1,74 @@
+name: Scrape Jobs & Publish Report
+
+on:
+  # Run every 6 hours
+  schedule:
+    - cron: '0 */6 * * *'
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run scraper
+        run: python main.py --now --no-email
+
+      - name: Combine all reports
+        run: |
+          if ls output/jobs_*.json 1>/dev/null 2>&1; then
+            python combine_reports.py
+          fi
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          # Copy the latest combined HTML as index.html
+          COMBINED=$(ls -t output/combined_*.html 2>/dev/null | head -1)
+          if [ -n "$COMBINED" ]; then
+            cp "$COMBINED" _site/index.html
+          else
+            # Fallback to latest individual HTML
+            LATEST=$(ls -t output/jobs_*.html 2>/dev/null | head -1)
+            if [ -n "$LATEST" ]; then
+              cp "$LATEST" _site/index.html
+            else
+              echo "<h1>No jobs found yet. Check back later.</h1>" > _site/index.html
+            fi
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: scrape
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

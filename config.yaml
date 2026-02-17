@@ -1,0 +1,19 @@
+roles:
+  - "Product Management Intern"
+  - "Technical Program Management Intern"
+  - "Technical Project Management Intern"
+  - "Data Analyst Intern"
+  - "Business Analyst Intern"
+
+schedule_hours: 4
+max_age_days: 1
+
+scrapers:
+  - internlist
+  - wayup
+  - simplyhired
+  - indeed
+  - linkedin
+  - glassdoor
+
+location: "United States"
