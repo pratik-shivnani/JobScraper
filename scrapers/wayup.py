@@ -26,7 +26,8 @@ class WayUpScraper(BaseScraper):
     def _scrape_role(self, role: str) -> List[Job]:
         role_jobs = []
         query = quote_plus(role)
-        url = f"{self.BASE_URL}/s/internships/?q={query}"
+        path = "internships" if self.job_type == "internship" else "jobs"
+        url = f"{self.BASE_URL}/s/{path}/?q={query}"
 
         try:
             resp = requests.get(url, headers=self._get_headers(), timeout=15)
@@ -76,7 +77,7 @@ class WayUpScraper(BaseScraper):
                 if company_el:
                     company = company_el.get_text(strip=True)
 
-                location = "United States"
+                location = self.location
                 loc_el = card.find(class_=lambda c: c and "location" in c.lower() if c else False)
                 if loc_el:
                     location = loc_el.get_text(strip=True)

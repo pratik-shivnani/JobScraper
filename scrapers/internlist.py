@@ -93,7 +93,7 @@ class InternListScraper(BaseScraper):
                 page_jobs.append(Job(
                     title=title,
                     company=company,
-                    location="United States",
+                    location=self.location,
                     url=href,
                     source="intern-list.com",
                     matched_role=matched_role,

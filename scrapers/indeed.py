@@ -26,7 +26,9 @@ class IndeedScraper(BaseScraper):
     def _scrape_role(self, role: str) -> List[Job]:
         role_jobs = []
         query = quote_plus(role)
-        url = f"{self.BASE_URL}/jobs?q={query}&l=United+States&fromage=1&sort=date"
+        loc_encoded = quote_plus(self.location)
+        jt_param = "&jt=internship" if self.job_type == "internship" else ""
+        url = f"{self.BASE_URL}/jobs?q={query}&l={loc_encoded}&fromage=1&sort=date{jt_param}"
 
         try:
             resp = requests.get(url, headers=self._get_headers(), timeout=15)
@@ -75,7 +77,7 @@ class IndeedScraper(BaseScraper):
                 if company_el:
                     company = company_el.get_text(strip=True)
 
-                location = "United States"
+                location = self.location
                 loc_el = card.find("div", {"data-testid": "text-location"})
                 if not loc_el:
                     loc_el = card.find(class_=lambda c: c and "location" in c.lower() if c else False)

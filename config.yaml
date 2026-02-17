@@ -5,6 +5,7 @@ roles:
   - "Data Analyst Intern"
   - "Business Analyst Intern"
 
+job_type: "internship"   # internship, job, or all
 schedule_hours: 4
 max_age_days: 1
 

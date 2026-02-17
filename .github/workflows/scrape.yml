@@ -4,8 +4,31 @@ on:
   # Run every 6 hours
   schedule:
     - cron: '0 */6 * * *'
-  # Manual trigger from GitHub UI
+  # Manual trigger from GitHub UI with customizable inputs
   workflow_dispatch:
+    inputs:
+      roles:
+        description: 'Comma-separated roles (e.g. "Product Management Intern,Data Analyst Intern")'
+        required: false
+        type: string
+      job_type:
+        description: 'Type of listing to search'
+        required: false
+        default: 'internship'
+        type: choice
+        options:
+          - internship
+          - job
+          - all
+      location:
+        description: 'Location (e.g. "United States", "New York", "Remote")'
+        required: false
+        default: 'United States'
+        type: string
+      sources:
+        description: 'Comma-separated sources (e.g. "linkedin,simplyhired,indeed,glassdoor,wayup,internlist")'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -34,7 +57,21 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run scraper
-        run: python main.py --now --no-email
+        run: |
+          CMD="python main.py --now --no-email"
+          if [ -n "${{ github.event.inputs.roles }}" ]; then
+            CMD="$CMD --roles '${{ github.event.inputs.roles }}'"
+          fi
+          if [ -n "${{ github.event.inputs.job_type }}" ]; then
+            CMD="$CMD --job-type ${{ github.event.inputs.job_type }}"
+          fi
+          if [ -n "${{ github.event.inputs.location }}" ]; then
+            CMD="$CMD --location '${{ github.event.inputs.location }}'"
+          fi
+          if [ -n "${{ github.event.inputs.sources }}" ]; then
+            CMD="$CMD --sources '${{ github.event.inputs.sources }}'"
+          fi
+          eval $CMD
 
       - name: Combine all reports
         run: |

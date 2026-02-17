@@ -26,7 +26,9 @@ class SimplyHiredScraper(BaseScraper):
     def _scrape_role(self, role: str) -> List[Job]:
         role_jobs = []
         query = quote_plus(role)
-        url = f"{self.BASE_URL}/search?q={query}&l=United+States&t=internship&fdb=1"
+        loc_encoded = quote_plus(self.location)
+        type_param = f"&t={self.job_type}" if self.job_type != "all" else ""
+        url = f"{self.BASE_URL}/search?q={query}&l={loc_encoded}{type_param}&fdb=1"
 
         try:
             resp = requests.get(url, headers=self._get_headers(), timeout=15)
@@ -69,7 +71,7 @@ class SimplyHiredScraper(BaseScraper):
                 if company_el:
                     company = company_el.get_text(strip=True)
 
-                location = "United States"
+                location = self.location
                 loc_el = card.find(class_=lambda c: c and "location" in c.lower() if c else False)
                 if not loc_el:
                     loc_el = card.find("span", {"data-testid": "searchSerpJobLocation"})

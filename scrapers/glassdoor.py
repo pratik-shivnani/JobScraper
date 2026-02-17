@@ -74,7 +74,7 @@ class GlassdoorScraper(BaseScraper):
                 if company_el:
                     company = company_el.get_text(strip=True)
 
-                location = "United States"
+                location = self.location
                 loc_el = card.find(class_=lambda c: c and "location" in c.lower() if c else False)
                 if not loc_el:
                     loc_el = card.find("span", {"data-test": "emp-location"})

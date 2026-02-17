@@ -63,10 +63,11 @@ def parse_relative_time(text: str) -> Optional[datetime]:
 class BaseScraper(ABC):
     """Abstract base class for all job scrapers."""
 
-    def __init__(self, roles: List[str], location: str = "United States", max_age_days: int = 1):
+    def __init__(self, roles: List[str], location: str = "United States", max_age_days: int = 1, job_type: str = "internship"):
         self.roles = roles
         self.location = location
         self.max_age_days = max_age_days
+        self.job_type = job_type  # "internship", "job", or "all"
         self._ua = UserAgent()
 
     @property

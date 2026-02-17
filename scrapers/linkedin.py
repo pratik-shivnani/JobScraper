@@ -26,13 +26,18 @@ class LinkedInScraper(BaseScraper):
     def _scrape_role(self, role: str) -> List[Job]:
         role_jobs = []
         query = quote_plus(role)
+        loc_encoded = quote_plus(self.location)
         url = (
             f"{self.GUEST_API}"
             f"?keywords={query}"
-            f"&location=United%20States"
+            f"&location={loc_encoded}"
             f"&f_TPR=r86400"
             f"&start=0"
         )
+        if self.job_type == "internship":
+            url += "&f_E=1"  # Entry level / internship
+        elif self.job_type == "job":
+            url += "&f_E=2,3"  # Associate + Mid-Senior
 
         try:
             resp = requests.get(url, headers=self._get_headers(), timeout=15)
@@ -61,7 +66,7 @@ class LinkedInScraper(BaseScraper):
                 company_el = item.find("h4")
                 company = company_el.get_text(strip=True) if company_el else ""
 
-                location = "United States"
+                location = self.location
                 loc_parts = item.find_all(string=True)
                 for part in loc_parts:
                     text = part.strip()

@@ -116,20 +116,22 @@ def save_to_file(jobs, output_dir: Path, roles: list):
     print(f"\n{'='*60}\n")
 
 
-def run_scrape(no_email: bool = False):
+def run_scrape(no_email: bool = False, cli_roles: list = None, cli_location: str = None, cli_sources: list = None, cli_job_type: str = None):
     """Run all configured scrapers, deduplicate, and optionally send email or save to file."""
     load_dotenv()
 
     config = load_config()
-    roles = config.get("roles", [])
-    location = config.get("location", "United States")
-    enabled_scrapers = config.get("scrapers", [])
+    roles = cli_roles or config.get("roles", [])
+    location = cli_location or config.get("location", "United States")
+    enabled_scrapers = cli_sources or config.get("scrapers", [])
+    job_type = cli_job_type or config.get("job_type", "internship")
 
     max_age_days = config.get("max_age_days", 1)
 
     logger.info(f"Starting scrape for {len(roles)} roles across {len(enabled_scrapers)} sources")
     logger.info(f"Roles: {roles}")
     logger.info(f"Sources: {enabled_scrapers}")
+    logger.info(f"Location: {location} | Job type: {job_type}")
     logger.info(f"Max age: {max_age_days} day(s)")
 
     all_jobs = []
@@ -139,7 +141,7 @@ def run_scrape(no_email: bool = False):
             logger.warning(f"Unknown scraper: {scraper_name}")
             continue
 
-        scraper = scraper_cls(roles=roles, location=location, max_age_days=max_age_days)
+        scraper = scraper_cls(roles=roles, location=location, max_age_days=max_age_days, job_type=job_type)
         jobs = scraper.safe_scrape()
         all_jobs.extend(jobs)
 
@@ -187,11 +189,45 @@ def main():
         action="store_true",
         help="Skip sending email — only save results to output/ folder",
     )
+    parser.add_argument(
+        "--roles",
+        type=str,
+        default=None,
+        help="Comma-separated list of roles to search (overrides config.yaml)",
+    )
+    parser.add_argument(
+        "--location",
+        type=str,
+        default=None,
+        help="Location to search, e.g. 'United States' or 'New York' (overrides config.yaml)",
+    )
+    parser.add_argument(
+        "--sources",
+        type=str,
+        default=None,
+        help="Comma-separated list of sources: linkedin,simplyhired,indeed,glassdoor,wayup,internlist (overrides config.yaml)",
+    )
+    parser.add_argument(
+        "--job-type",
+        type=str,
+        default=None,
+        choices=["internship", "job", "all"],
+        help="Type of listing to search: internship, job, or all (overrides config.yaml)",
+    )
     args = parser.parse_args()
+
+    cli_roles = [r.strip() for r in args.roles.split(",")] if args.roles else None
+    cli_sources = [s.strip() for s in args.sources.split(",")] if args.sources else None
 
     if args.now:
         logger.info("Running one-shot scrape...")
-        run_scrape(no_email=args.no_email)
+        run_scrape(
+            no_email=args.no_email,
+            cli_roles=cli_roles,
+            cli_location=args.location,
+            cli_sources=cli_sources,
+            cli_job_type=args.job_type,
+        )
         return
 
     config = load_config()
