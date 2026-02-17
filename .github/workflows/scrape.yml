@@ -26,7 +26,7 @@ on:
         default: 'United States'
         type: string
       sources:
-        description: 'Comma-separated sources (e.g. "linkedin,simplyhired,indeed,glassdoor,wayup,internlist")'
+        description: 'Comma-separated sources or URLs (e.g. "linkedin,indeed,https://boards.greenhouse.io/stripe")'
         required: false
         type: string
 

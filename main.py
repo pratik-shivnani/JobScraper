@@ -19,6 +19,7 @@ from scrapers.simplyhired import SimplyHiredScraper
 from scrapers.indeed import IndeedScraper
 from scrapers.linkedin import LinkedInScraper
 from scrapers.glassdoor import GlassdoorScraper
+from scrapers.generic import GenericScraper
 from dedup import DedupStore
 from email_sender import send_email
 
@@ -137,11 +138,15 @@ def run_scrape(no_email: bool = False, cli_roles: list = None, cli_location: str
     all_jobs = []
     for scraper_name in enabled_scrapers:
         scraper_cls = SCRAPER_MAP.get(scraper_name)
-        if not scraper_cls:
-            logger.warning(f"Unknown scraper: {scraper_name}")
+        if scraper_cls:
+            scraper = scraper_cls(roles=roles, location=location, max_age_days=max_age_days, job_type=job_type)
+        elif scraper_name.startswith("http://") or scraper_name.startswith("https://"):
+            logger.info(f"Using generic scraper for URL: {scraper_name}")
+            scraper = GenericScraper(url=scraper_name, roles=roles, location=location, max_age_days=max_age_days, job_type=job_type)
+        else:
+            logger.warning(f"Unknown scraper: {scraper_name} — pass a URL (https://...) to use the generic scraper")
             continue
 
-        scraper = scraper_cls(roles=roles, location=location, max_age_days=max_age_days, job_type=job_type)
         jobs = scraper.safe_scrape()
         all_jobs.extend(jobs)
 
